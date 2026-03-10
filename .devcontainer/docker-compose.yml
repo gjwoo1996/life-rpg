@@ -1,0 +1,28 @@
+services:
+  workspace:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspaces/life-rpg
+    command: sleep infinity
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    ports:
+      - "1420:1420"
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    # GPU: v2 방식 (runtime: nvidia) — WSL2에서 호환성 좋음
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+
+volumes:
+  ollama-data:

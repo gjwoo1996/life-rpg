@@ -1,0 +1,29 @@
+{
+  "name": "Life RPG Dev",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "workspace",
+  "workspaceFolder": "/workspaces/life-rpg",
+  "runArgs": ["--service-ports"],
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  // SSH 설정 마운트 (WSL2의 SSH 키와 config 사용)
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "tauri-apps.tauri-vscode",
+        "rust-lang.rust-analyzer",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  },
+  "postCreateCommand": "npm install -g @tauri-apps/cli@latest && rustc --version && node --version && tauri --version",
+  "postStartCommand": ".devcontainer/scripts/ensure-ollama-model.sh || true",
+  "remoteUser": "vscode"
+}
