@@ -1,5 +1,21 @@
 # Life RPG 사용 방법
 
+## 0. 로컬에서 UI 확인 (개발자)
+
+exe를 빌드하기 전에 로컬에서 앱을 띄워 UI와 동작을 확인할 수 있습니다.
+
+- **필요 환경**: Node.js(LTS), Rust(stable). Windows에서 exe를 만들 경우 Visual Studio Build Tools 등이 필요할 수 있습니다.
+- **명령**:
+  ```bash
+  npm install
+  npm run tauri:dev
+  ```
+- **동작**: Tauri 개발 모드로 창이 열리고, 프론트엔드는 HMR로 갱신됩니다. 실제 exe와 동일한 UI를 로컬 창에서 확인할 수 있습니다.
+- **참고**: WSL2 안에서는 GUI가 필요하므로, **Windows 호스트**에서 터미널을 열고 위 명령을 실행하는 것을 권장합니다.
+- **빌드 흐름**: 로컬에서 UI 확인 → 만족하면 커밋 후 `main`에 push → GitHub **Actions** 탭에서 **Build Windows** 워크플로 실행(또는 push 시 자동 실행) → 완료 후 **Artifacts**에서 exe·설치 파일 다운로드.
+
+---
+
 ## 1. 준비
 
 ### exe 받기

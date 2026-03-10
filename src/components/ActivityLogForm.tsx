@@ -52,13 +52,16 @@ export function ActivityLogForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 mb-4">
-      <div className="flex gap-4 flex-wrap items-center">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 mb-4 p-4 rounded-xl bg-white border border-slate-200 shadow-sm"
+    >
+      <div className="flex gap-3 flex-wrap items-center">
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="px-3 py-2 rounded bg-slate-800 border border-slate-600 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
           disabled={loading}
         />
         <input
@@ -67,33 +70,35 @@ export function ActivityLogForm() {
           value={xpGained}
           onChange={(e) => setXpGained(parseInt(e.target.value) || 0)}
           placeholder="획득 XP"
-          className="w-24 px-3 py-2 rounded bg-slate-800 border border-slate-600 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-24 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
           disabled={loading}
         />
         <button
           type="button"
           onClick={handleAiAnalyze}
           disabled={aiLoading || loading || !content.trim()}
-          className="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-sm font-medium transition-colors"
+          className="px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50 text-sm font-medium transition-colors"
         >
           {aiLoading ? "AI 분석 중..." : "AI 분석"}
         </button>
       </div>
       {aiError && (
-        <p className="text-red-400 text-sm">{aiError}</p>
+        <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">
+          {aiError}
+        </p>
       )}
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="오늘 한 활동을 기록하세요..."
         rows={3}
-        className="w-full px-3 py-2 rounded bg-slate-800 border border-slate-600 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
         disabled={loading}
       />
       <button
         type="submit"
         disabled={loading || !content.trim()}
-        className="px-4 py-2 rounded bg-amber-600 hover:bg-amber-500 disabled:opacity-50 font-medium transition-colors"
+        className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50 font-medium transition-colors"
       >
         {loading ? "저장 중..." : "기록 저장"}
       </button>

@@ -14,12 +14,12 @@ export function PixelCharacter({ level }: PixelCharacterProps) {
   const stage = getStage(level);
 
   return (
-    <div className="w-24 h-24 rounded-lg bg-slate-700 flex items-center justify-center border-2 border-slate-600">
+    <div className="w-24 h-24 rounded-lg bg-slate-100 flex items-center justify-center border-2 border-amber-400/60 shadow-inner">
       <div
-        className="w-16 h-16 rounded bg-amber-500/80"
+        className="w-16 h-16 rounded bg-amber-500/90"
         title={`Stage ${stage} (Lv.${level})`}
         style={{
-          boxShadow: "inset 0 0 0 2px rgba(0,0,0,0.2)",
+          boxShadow: "inset 0 0 0 2px rgba(0,0,0,0.15)",
         }}
       />
     </div>

@@ -12,6 +12,7 @@ interface CharacterState {
   createGoal: (name: string, startDate: string, endDate: string, targetSkill: string) => Promise<Goal | null>;
   loadLogs: (fromDate?: string, toDate?: string) => Promise<void>;
   createLog: (date: string, content: string, xpGained: number) => Promise<ActivityLog | null>;
+  resetApp: () => Promise<void>;
 }
 
 export const useCharacterStore = create<CharacterState>((set, get) => ({
@@ -104,6 +105,15 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     } catch (e) {
       console.error("createLog failed:", e);
       return null;
+    }
+  },
+
+  resetApp: async () => {
+    try {
+      await invoke("reset_app");
+      set({ character: null, goals: [], logs: [] });
+    } catch (e) {
+      console.error("resetApp failed:", e);
     }
   },
 }));

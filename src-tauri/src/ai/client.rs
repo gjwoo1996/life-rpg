@@ -31,11 +31,14 @@ impl XpResult {
 
 #[tauri::command]
 pub async fn analyze_activity(content: String) -> Result<XpResult, String> {
+    log::info!("analyze_activity: content_len={}", content.len());
     // Try rule-based first
     if let Some(m) = rules::try_rule_based(&content) {
+        log::info!("analyze_activity: rule-based result");
         return Ok(XpResult::from_map(m));
     }
 
+    log::info!("analyze_activity: calling LLM");
     // Fall back to LLM
     let host = std::env::var("OLLAMA_HOST").unwrap_or_else(|_| "http://localhost:11434".into());
     let url = format!("{}/api/generate", host.trim_end_matches('/'));
@@ -57,6 +60,7 @@ pub async fn analyze_activity(content: String) -> Result<XpResult, String> {
         .map_err(|e| format!("Ollama request failed: {}", e))?;
 
     if !res.status().is_success() {
+        log::error!("analyze_activity: Ollama returned status {}", res.status());
         return Err(format!("Ollama returned status: {}", res.status()));
     }
 
@@ -83,6 +87,7 @@ pub async fn analyze_activity(content: String) -> Result<XpResult, String> {
 
     let obj = parsed.as_object().ok_or("Expected JSON object")?;
 
+    log::info!("analyze_activity: LLM success");
     Ok(XpResult {
         intelligence: obj
             .get("intelligence")

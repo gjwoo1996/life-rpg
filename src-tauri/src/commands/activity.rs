@@ -20,6 +20,7 @@ pub fn create_activity_log(
     xp_gained: i32,
     state: State<Database>,
 ) -> Result<ActivityLog, String> {
+    log::info!("create_activity_log: character_id={} date={} xp_gained={}", character_id, date, xp_gained);
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "INSERT INTO activity_logs (character_id, date, content, xp_gained) VALUES (?1, ?2, ?3, ?4)",
@@ -68,6 +69,7 @@ pub fn list_activity_logs(
     to_date: Option<String>,
     state: State<Database>,
 ) -> Result<Vec<ActivityLog>, String> {
+    log::debug!("list_activity_logs: character_id={}", character_id);
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let from = from_date.as_deref().unwrap_or("0000-00-00");
     let to = to_date.as_deref().unwrap_or("9999-99-99");

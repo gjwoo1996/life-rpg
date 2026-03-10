@@ -11,13 +11,11 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log::LevelFilter::Info)
+                    .build(),
+            )?;
             let path = app
                 .path()
                 .app_data_dir()
@@ -32,6 +30,7 @@ pub fn run() {
             commands::get_character,
             commands::get_stats,
             commands::update_character_xp,
+            commands::reset_app,
             commands::create_goal,
             commands::list_goals,
             commands::create_activity_log,

@@ -21,6 +21,7 @@ pub fn create_goal(
     target_skill: String,
     state: State<Database>,
 ) -> Result<Goal, String> {
+    log::info!("create_goal: character_id={} name={}", character_id, name);
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
         "INSERT INTO goals (character_id, name, start_date, end_date, target_skill) VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -40,6 +41,7 @@ pub fn create_goal(
 
 #[tauri::command]
 pub fn list_goals(character_id: i64, state: State<Database>) -> Result<Vec<Goal>, String> {
+    log::debug!("list_goals: character_id={}", character_id);
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare("SELECT goal_id, character_id, name, start_date, end_date, target_skill FROM goals WHERE character_id = ?1 ORDER BY goal_id DESC")

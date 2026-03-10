@@ -27,6 +27,7 @@ fn xp_to_level(xp: i32) -> i32 {
 
 #[tauri::command]
 pub fn create_character(name: String, state: State<Database>) -> Result<Character, String> {
+    log::info!("create_character: name={}", name);
     let created_at = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     conn.execute(
@@ -40,6 +41,7 @@ pub fn create_character(name: String, state: State<Database>) -> Result<Characte
         rusqlite::params![id],
     )
     .map_err(|e| e.to_string())?;
+    log::info!("create_character: id={} created", id);
     Ok(Character {
         id,
         name,
@@ -51,6 +53,7 @@ pub fn create_character(name: String, state: State<Database>) -> Result<Characte
 
 #[tauri::command]
 pub fn get_character(state: State<Database>) -> Result<Option<Character>, String> {
+    log::debug!("get_character called");
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare("SELECT id, name, level, xp, created_at FROM characters ORDER BY id DESC LIMIT 1")
@@ -71,6 +74,7 @@ pub fn get_character(state: State<Database>) -> Result<Option<Character>, String
 
 #[tauri::command]
 pub fn get_stats(character_id: i64, state: State<Database>) -> Result<Stats, String> {
+    log::debug!("get_stats: character_id={}", character_id);
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare("SELECT character_id, intelligence, focus, discipline, knowledge, health FROM stats WHERE character_id = ?1")
@@ -93,6 +97,7 @@ pub fn update_character_xp(
     xp_delta: i32,
     state: State<Database>,
 ) -> Result<(i32, i32), String> {
+    log::info!("update_character_xp: character_id={} delta={}", character_id, xp_delta);
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     let current_xp: i32 = conn
         .query_row("SELECT xp FROM characters WHERE id = ?1", rusqlite::params![character_id], |r| r.get(0))
@@ -104,5 +109,16 @@ pub fn update_character_xp(
         rusqlite::params![new_xp, new_level, character_id],
     )
     .map_err(|e| e.to_string())?;
+    log::info!("update_character_xp: new_level={} new_xp={}", new_level, new_xp);
     Ok((new_level, new_xp))
+}
+
+#[tauri::command]
+pub fn reset_app(state: State<Database>) -> Result<(), String> {
+    log::warn!("reset_app: clearing all character data");
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM characters", [])
+        .map_err(|e| e.to_string())?;
+    log::info!("reset_app: completed");
+    Ok(())
 }
