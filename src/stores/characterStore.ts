@@ -9,9 +9,9 @@ interface CharacterState {
   loadCharacter: () => Promise<void>;
   createCharacter: (name: string) => Promise<Character | null>;
   loadGoals: () => Promise<void>;
-  createGoal: (name: string, startDate: string, endDate: string, targetSkill: string) => Promise<Goal | null>;
+  createGoal: (name: string, startDate: string, endDate: string, targetSkill: string, calendarColor?: string) => Promise<Goal | null>;
   loadLogs: (fromDate?: string, toDate?: string) => Promise<void>;
-  createLog: (date: string, content: string, xpGained: number) => Promise<ActivityLog | null>;
+  createLog: (date: string, content: string) => Promise<ActivityLog | null>;
   resetApp: () => Promise<void>;
 }
 
@@ -55,7 +55,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     }
   },
 
-  createGoal: async (name: string, startDate: string, endDate: string, targetSkill: string) => {
+  createGoal: async (name: string, startDate: string, endDate: string, targetSkill: string, calendarColor?: string) => {
     const { character } = get();
     if (!character) return null;
     try {
@@ -65,6 +65,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
         startDate,
         endDate,
         targetSkill,
+        calendarColor: calendarColor ?? null,
       });
       set((s) => ({ goals: [goal, ...s.goals] }));
       return goal;
@@ -89,23 +90,16 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     }
   },
 
-  createLog: async (date: string, content: string, xpGained: number) => {
+  createLog: async (date: string, content: string) => {
     const { character } = get();
     if (!character) return null;
-    try {
-      const log = await invoke<ActivityLog>("create_activity_log", {
-        characterId: character.id,
-        date,
-        content,
-        xpGained,
-      });
-      set((s) => ({ logs: [log, ...s.logs] }));
-      set({ character: { ...character, xp: character.xp + xpGained, level: 1 + Math.floor((character.xp + xpGained) / 100) } });
-      return log;
-    } catch (e) {
-      console.error("createLog failed:", e);
-      return null;
-    }
+    const log = await invoke<ActivityLog>("create_activity_log", {
+      characterId: character.id,
+      date,
+      content,
+    });
+    set((s) => ({ logs: [log, ...s.logs] }));
+    return log;
   },
 
   resetApp: async () => {

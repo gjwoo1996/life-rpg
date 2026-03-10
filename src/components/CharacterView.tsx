@@ -1,20 +1,28 @@
 import { useEffect, useState } from "react";
 import { useCharacterStore } from "../stores/characterStore";
 import { PixelCharacter } from "./PixelCharacter";
-import type { Stats } from "../types";
+import type { AbilityStat } from "../types";
 import { invoke } from "@tauri-apps/api/core";
+
+const MAX_XP = 100;
+const MAX_LEVEL = 10;
+
+function levelFromXp(xp: number): number {
+  return Math.min(MAX_LEVEL, 1 + Math.floor(xp / 10));
+}
 
 export function CharacterView() {
   const { character } = useCharacterStore();
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [abilityStats, setAbilityStats] = useState<AbilityStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!character) return;
     setLoading(true);
-    invoke<Stats>("get_stats", { characterId: character.id })
-      .then(setStats)
-      .catch(console.error)
+    invoke<AbilityStat[]>("get_ability_stats", { characterId: character.id })
+      .then(setAbilityStats)
+      .catch(() => setAbilityStats([]))
       .finally(() => setLoading(false));
   }, [character]);
 
@@ -23,7 +31,7 @@ export function CharacterView() {
   return (
     <section className="flex flex-col md:flex-row gap-8 items-center p-6 rounded-xl bg-white border border-slate-200 shadow-sm">
       <PixelCharacter level={character.level} />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 w-full">
         <h1 className="text-2xl font-bold text-slate-800 mb-2">
           {character.name}
         </h1>
@@ -32,23 +40,57 @@ export function CharacterView() {
           <span>{character.xp} XP</span>
         </div>
         {loading ? (
-          <div className="grid grid-cols-2 gap-2 text-sm text-slate-400">
-            <div className="animate-pulse">지능: --</div>
-            <div className="animate-pulse">집중: --</div>
-            <div className="animate-pulse">규율: --</div>
-            <div className="animate-pulse">지식: --</div>
-            <div className="animate-pulse">체력: --</div>
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-6 bg-slate-100 rounded animate-pulse" />
+            ))}
           </div>
         ) : (
-          stats && (
-            <div className="grid grid-cols-2 gap-2 text-sm text-slate-700">
-              <div>지능: {stats.intelligence}</div>
-              <div>집중: {stats.focus}</div>
-              <div>규율: {stats.discipline}</div>
-              <div>지식: {stats.knowledge}</div>
-              <div>체력: {stats.health}</div>
-            </div>
-          )
+          <div className="space-y-3">
+            {abilityStats.map((stat, index) => {
+              const level = levelFromXp(stat.xp);
+              const pct = Math.min(100, (stat.xp / MAX_XP) * 100);
+              const isFocused = focusedIndex === index;
+              return (
+                <div key={stat.ability_id} className="group">
+                  <div className="flex items-center justify-between gap-2 mb-0.5">
+                    <span className="text-sm font-medium text-slate-700 shrink-0">
+                      {stat.name}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      Lv.{level} ({stat.xp}/{MAX_XP})
+                    </span>
+                  </div>
+                  <div
+                    tabIndex={0}
+                    className="h-5 rounded-full bg-slate-100 overflow-hidden outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1 transition-all cursor-default"
+                    onFocus={() => setFocusedIndex(index)}
+                    onBlur={() => setFocusedIndex(null)}
+                    onMouseEnter={() => setFocusedIndex(index)}
+                    onMouseLeave={() => setFocusedIndex(null)}
+                  >
+                    <div
+                      className="h-full rounded-full bg-amber-500 transition-all duration-500 ease-out"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  {isFocused && (
+                    <div
+                      className="mt-1 text-xs text-slate-600 transition-opacity duration-200"
+                      role="tooltip"
+                    >
+                      총 경험치 {MAX_XP} 중 현재 {stat.xp} · Lv.{level}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {abilityStats.length === 0 && (
+              <p className="text-slate-500 text-sm">
+                목표를 추가하면 능력이 여기에 표시됩니다.
+              </p>
+            )}
+          </div>
         )}
       </div>
     </section>

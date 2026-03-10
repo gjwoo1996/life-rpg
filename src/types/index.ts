@@ -22,6 +22,19 @@ export interface Goal {
   start_date: string;
   end_date: string;
   target_skill: string;
+  calendar_color: string;
+}
+
+export interface Ability {
+  ability_id: number;
+  character_id: number;
+  name: string;
+}
+
+export interface AbilityStat {
+  ability_id: number;
+  name: string;
+  xp: number;
 }
 
 export interface ActivityLog {
@@ -29,6 +42,7 @@ export interface ActivityLog {
   character_id: number;
   date: string;
   content: string;
+  summary: string | null;
   ai_result: string | null;
   xp_gained: number;
 }

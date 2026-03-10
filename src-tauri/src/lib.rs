@@ -31,11 +31,17 @@ pub fn run() {
             commands::get_stats,
             commands::update_character_xp,
             commands::reset_app,
+            commands::list_abilities,
+            commands::ensure_ability,
+            commands::get_ability_stats,
             commands::create_goal,
             commands::list_goals,
             commands::create_activity_log,
             commands::list_activity_logs,
+            commands::get_daily_analysis,
+            commands::get_goal_analysis,
             crate::ai::client::analyze_activity,
+            crate::ai::client::summarize_content,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
