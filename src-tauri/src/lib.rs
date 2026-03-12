@@ -28,7 +28,6 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::create_character,
             commands::get_character,
-            commands::get_stats,
             commands::update_character_xp,
             commands::reset_app,
             commands::list_abilities,

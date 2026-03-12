@@ -1,6 +1,7 @@
 use crate::commands::ability::{add_ability_xp_inner, get_ability_names_inner};
+use crate::commands::goal::{get_goal_analysis_row, list_goals_for_date, save_goal_analysis};
 use crate::db::Database;
-use crate::ai::client::{analyze_activity, get_daily_analysis_text, summarize_content};
+use crate::ai::client::{analyze_activity, get_daily_analysis_text, get_goal_analysis_text, summarize_content};
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -95,6 +96,68 @@ pub async fn create_activity_log(
                 "REPLACE INTO daily_analyses (date, character_id, analysis_text) VALUES (?1, ?2, ?3)",
                 rusqlite::params![date, character_id, analysis_text],
             );
+        }
+    }
+
+    // Update goal-level cumulative analyses for active goals (today in [start_date, end_date])
+    {
+        let goals_and_inputs: Vec<_> = {
+            let conn = state.0.lock().expect("db lock");
+            let goals = list_goals_for_date(&conn, character_id, &date).unwrap_or_default();
+            if goals.is_empty() {
+                vec![]
+            } else {
+                goals
+                    .into_iter()
+                    .filter_map(|goal| {
+                        let logs: Vec<(String, String, String)> = conn
+                            .prepare(
+                                "SELECT date, content, COALESCE(summary, '') FROM activity_logs \
+                                 WHERE character_id = ?1 AND date >= ?2 AND date <= ?3 ORDER BY date ASC, log_id ASC",
+                            )
+                            .ok()?
+                            .query_map(
+                                rusqlite::params![character_id, goal.start_date, date],
+                                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+                            )
+                            .ok()?
+                            .filter_map(Result::ok)
+                            .collect();
+                        let activities_text: String = logs
+                            .into_iter()
+                            .map(|(d, c, s)| {
+                                if s.is_empty() {
+                                    format!("[{}] {}", d, c)
+                                } else {
+                                    format!("[{}] {} - {}", d, s, c)
+                                }
+                            })
+                            .collect::<Vec<_>>()
+                            .join("\n");
+                        let (prev_ctx, prev_analysis) =
+                            get_goal_analysis_row(&conn, goal.goal_id).ok().flatten().unwrap_or((None, None));
+                        let previous_context = prev_analysis
+                            .as_deref()
+                            .or(prev_ctx.as_deref())
+                            .unwrap_or("");
+                        Some((goal, previous_context.to_string(), activities_text))
+                    })
+                    .collect()
+            }
+        };
+
+        for (goal, previous_context, activities_text) in goals_and_inputs {
+            if let Ok(analysis_text) = get_goal_analysis_text(
+                &goal.name,
+                &goal.target_skill,
+                &previous_context,
+                &activities_text,
+            )
+            .await
+            {
+                let conn = state.0.lock().expect("db lock");
+                let _ = save_goal_analysis(&conn, goal.goal_id, goal.character_id, &analysis_text);
+            }
         }
     }
 

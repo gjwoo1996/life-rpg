@@ -11,15 +11,6 @@ pub fn init_db(conn: &Connection) -> Result<(), rusqlite::Error> {
             created_at TEXT NOT NULL
         );
 
-        CREATE TABLE IF NOT EXISTS stats (
-            character_id INTEGER PRIMARY KEY REFERENCES characters(id) ON DELETE CASCADE,
-            intelligence INTEGER DEFAULT 0,
-            focus INTEGER DEFAULT 0,
-            discipline INTEGER DEFAULT 0,
-            knowledge INTEGER DEFAULT 0,
-            health INTEGER DEFAULT 0
-        );
-
         CREATE TABLE IF NOT EXISTS goals (
             goal_id INTEGER PRIMARY KEY AUTOINCREMENT,
             character_id INTEGER NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
@@ -35,6 +26,8 @@ pub fn init_db(conn: &Connection) -> Result<(), rusqlite::Error> {
     let _ = conn.execute("ALTER TABLE goals ADD COLUMN calendar_color TEXT DEFAULT '#6366f1'", []);
     // Migration: add summary to existing activity_logs if missing
     let _ = conn.execute("ALTER TABLE activity_logs ADD COLUMN summary TEXT", []);
+    // Migration: remove legacy stats table (replaced by abilities/ability_stats)
+    let _ = conn.execute("DROP TABLE IF EXISTS stats", []);
     conn.execute_batch(
         "
         CREATE TABLE IF NOT EXISTS activity_logs (

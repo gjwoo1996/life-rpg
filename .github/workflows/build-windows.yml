@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "App version (used in bundle and artifact name)"
+        description: "App version (비우면 tauri.conf.json 기준 패치 자동 증가)"
         required: false
-        default: "0.1.0"
+        default: ""
 
 jobs:
   build-windows:
@@ -20,10 +20,16 @@ jobs:
           node-version: "lts/*"
           cache: "npm"
 
+      - name: Determine version
+        id: version
+        run: node -e "var i=(process.env.INPUT_VERSION||'').trim(),fs=require('fs'),o=process.env.GITHUB_OUTPUT;if(i){fs.appendFileSync(o,'version='+i+'\n');}else{var c=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json','utf8')),p=c.version.split('.').map(function(s){return parseInt(s,10)||0;});while(p.length<3)p.push(0);p[2]++;fs.appendFileSync(o,'version='+p.join('.')+'\n');}"
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+
       - name: Set app version
         run: node -e "const fs=require('fs'); const p='src-tauri/tauri.conf.json'; const j=JSON.parse(fs.readFileSync(p,'utf8')); j.version=process.env.VERSION; fs.writeFileSync(p, JSON.stringify(j,null,2));"
         env:
-          VERSION: ${{ github.event.inputs.version }}
+          VERSION: ${{ steps.version.outputs.version }}
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -44,7 +50,7 @@ jobs:
       - name: Upload exe and installer
         uses: actions/upload-artifact@v4
         with:
-          name: life-rpg-windows-v${{ github.event.inputs.version }}
+          name: life-rpg-windows-v${{ steps.version.outputs.version }}
           path: |
             src-tauri/target/release/life-rpg.exe
             src-tauri/target/release/bundle/nsis/

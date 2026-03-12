@@ -1,5 +1,6 @@
 use crate::commands::ability::ensure_ability_inner;
 use crate::db::Database;
+use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -81,4 +82,66 @@ pub fn get_goal_analysis(goal_id: i64, state: State<Database>) -> Result<Option<
         return row.map(Some).map_err(|e| e.to_string());
     }
     Ok(None)
+}
+
+/// List goals for character where date is within [start_date, end_date].
+pub fn list_goals_for_date(
+    conn: &Connection,
+    character_id: i64,
+    date: &str,
+) -> Result<Vec<Goal>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT goal_id, character_id, name, start_date, end_date, target_skill, calendar_color \
+             FROM goals WHERE character_id = ?1 AND ?2 >= start_date AND ?2 <= end_date ORDER BY goal_id DESC",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![character_id, date], |row| {
+            Ok(Goal {
+                goal_id: row.get(0)?,
+                character_id: row.get(1)?,
+                name: row.get(2)?,
+                start_date: row.get(3)?,
+                end_date: row.get(4)?,
+                target_skill: row.get(5)?,
+                calendar_color: row.get::<_, String>(6).unwrap_or_else(|_| "#6366f1".to_string()),
+            })
+        })
+        .map_err(|e| e.to_string())?;
+    rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+}
+
+/// Get existing goal_analyses row: (summarized_context, analysis_text).
+pub fn get_goal_analysis_row(
+    conn: &Connection,
+    goal_id: i64,
+) -> Result<Option<(Option<String>, Option<String>)>, String> {
+    let mut stmt = conn
+        .prepare("SELECT summarized_context, analysis_text FROM goal_analyses WHERE goal_id = ?1")
+        .map_err(|e| e.to_string())?;
+    let mut rows = stmt
+        .query_map(rusqlite::params![goal_id], |r| Ok((r.get::<_, Option<String>>(0)?, r.get::<_, Option<String>>(1)?)))
+        .map_err(|e| e.to_string())?;
+    if let Some(row) = rows.next() {
+        return row.map(Some).map_err(|e| e.to_string());
+    }
+    Ok(None)
+}
+
+/// Save or replace goal analysis for a goal.
+pub fn save_goal_analysis(
+    conn: &Connection,
+    goal_id: i64,
+    character_id: i64,
+    analysis_text: &str,
+) -> Result<(), String> {
+    let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    conn.execute(
+        "REPLACE INTO goal_analyses (goal_id, character_id, summarized_context, last_analyzed_at, analysis_text) \
+         VALUES (?1, ?2, NULL, ?3, ?4)",
+        rusqlite::params![goal_id, character_id, now, analysis_text],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
 }

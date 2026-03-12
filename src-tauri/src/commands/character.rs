@@ -11,16 +11,6 @@ pub struct Character {
     pub created_at: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Stats {
-    pub character_id: i64,
-    pub intelligence: i32,
-    pub focus: i32,
-    pub discipline: i32,
-    pub knowledge: i32,
-    pub health: i32,
-}
-
 fn xp_to_level(xp: i32) -> i32 {
     (1 + xp / 100).max(1)
 }
@@ -36,11 +26,6 @@ pub fn create_character(name: String, state: State<Database>) -> Result<Characte
     )
     .map_err(|e| e.to_string())?;
     let id = conn.last_insert_rowid();
-    conn.execute(
-        "INSERT INTO stats (character_id, intelligence, focus, discipline, knowledge, health) VALUES (?1, 0, 0, 0, 0, 0)",
-        rusqlite::params![id],
-    )
-    .map_err(|e| e.to_string())?;
     log::info!("create_character: id={} created", id);
     Ok(Character {
         id,
@@ -70,25 +55,6 @@ pub fn get_character(state: State<Database>) -> Result<Option<Character>, String
     } else {
         Ok(None)
     }
-}
-
-#[tauri::command]
-pub fn get_stats(character_id: i64, state: State<Database>) -> Result<Stats, String> {
-    log::debug!("get_stats: character_id={}", character_id);
-    let conn = state.0.lock().map_err(|e| e.to_string())?;
-    let mut stmt = conn
-        .prepare("SELECT character_id, intelligence, focus, discipline, knowledge, health FROM stats WHERE character_id = ?1")
-        .map_err(|e| e.to_string())?;
-    let mut rows = stmt.query(rusqlite::params![character_id]).map_err(|e| e.to_string())?;
-    let row = rows.next().map_err(|e| e.to_string())?.ok_or("Stats not found")?;
-    Ok(Stats {
-        character_id: row.get(0).map_err(|e| e.to_string())?,
-        intelligence: row.get(1).map_err(|e| e.to_string())?,
-        focus: row.get(2).map_err(|e| e.to_string())?,
-        discipline: row.get(3).map_err(|e| e.to_string())?,
-        knowledge: row.get(4).map_err(|e| e.to_string())?,
-        health: row.get(5).map_err(|e| e.to_string())?,
-    })
 }
 
 #[tauri::command]

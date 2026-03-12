@@ -68,6 +68,29 @@ pub async fn summarize_content(content: String) -> Result<String, String> {
     call_llm(&prompt, model.as_deref()).await
 }
 
+/// Internal: get goal-level cumulative analysis from LLM.
+/// Uses Japanese model when previous_context or activities_text contains Japanese.
+pub async fn get_goal_analysis_text(
+    goal_name: &str,
+    target_ability: &str,
+    previous_context: &str,
+    activities_text: &str,
+) -> Result<String, String> {
+    let combined = format!("{} {}", previous_context, activities_text);
+    let prompt = prompt::build_goal_analysis_prompt(
+        goal_name,
+        target_ability,
+        previous_context,
+        activities_text,
+    );
+    let model = if is_japanese(&combined) {
+        Some(japanese_model())
+    } else {
+        None
+    };
+    call_llm(&prompt, model.as_deref()).await
+}
+
 /// Internal: get daily analysis text from LLM for a concatenated activities string.
 pub async fn get_daily_analysis_text(activities_text: String) -> Result<String, String> {
     if activities_text.trim().is_empty() {
