@@ -16,10 +16,9 @@ else
   docker compose -f .devcontainer/docker-compose.yml -p "$COMPOSE_PROJECT_NAME" exec -T ollama ollama pull qwen2.5:7b
 fi
 
+# Remove Japanese LLM model if present (no longer used)
 if echo "$TAGS" | grep -q 'gemma-2-2b-jpn-it'; then
-  echo "Japanese model (gemma-2-2b-jpn-it) already installed"
-else
-  echo "Installing Japanese model (schroneko/gemma-2-2b-jpn-it:q4_0)..."
-  docker compose -f .devcontainer/docker-compose.yml -p "$COMPOSE_PROJECT_NAME" exec -T ollama ollama pull schroneko/gemma-2-2b-jpn-it:q4_0
+  echo "Removing unused Japanese model (schroneko/gemma-2-2b-jpn-it:q4_0)..."
+  docker compose -f .devcontainer/docker-compose.yml -p "$COMPOSE_PROJECT_NAME" exec -T ollama ollama rm schroneko/gemma-2-2b-jpn-it:q4_0 || true
 fi
 echo "Model check complete"

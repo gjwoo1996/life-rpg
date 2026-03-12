@@ -13,7 +13,7 @@ pub fn run() {
         .setup(|app| {
             app.handle().plugin(
                 tauri_plugin_log::Builder::default()
-                    .level(log::LevelFilter::Info)
+                    .level(log::LevelFilter::Debug)
                     .build(),
             )?;
             let path = app

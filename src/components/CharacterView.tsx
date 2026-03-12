@@ -63,25 +63,25 @@ export function CharacterView() {
                   </div>
                   <div
                     tabIndex={0}
-                    className="h-5 rounded-full bg-slate-100 overflow-hidden outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1 transition-all cursor-default"
+                    className="relative h-5 rounded-full bg-slate-100 overflow-visible outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1 transition-all cursor-default"
                     onFocus={() => setFocusedIndex(index)}
                     onBlur={() => setFocusedIndex(null)}
                     onMouseEnter={() => setFocusedIndex(index)}
                     onMouseLeave={() => setFocusedIndex(null)}
                   >
                     <div
-                      className="h-full rounded-full bg-amber-500 transition-all duration-500 ease-out"
+                      className="h-full rounded-full bg-amber-500 transition-all duration-500 ease-out overflow-hidden"
                       style={{ width: `${pct}%` }}
                     />
+                    {isFocused && (
+                      <div
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-full bg-amber-500/90 text-xs font-medium text-amber-950 transition-opacity duration-200"
+                        role="tooltip"
+                      >
+                        총 경험치 {MAX_XP} 중 현재 {stat.xp} · Lv.{level}
+                      </div>
+                    )}
                   </div>
-                  {isFocused && (
-                    <div
-                      className="mt-1 text-xs text-slate-600 transition-opacity duration-200"
-                      role="tooltip"
-                    >
-                      총 경험치 {MAX_XP} 중 현재 {stat.xp} · Lv.{level}
-                    </div>
-                  )}
                 </div>
               );
             })}

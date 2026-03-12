@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { useLogStore, type AppLogEntry, type LogLevel } from "../stores/logStore";
+import { useEffect, useRef, useState } from "react";
+import { useLogStore, type AppLogEntry, type LogLevel, type LogSource } from "../stores/logStore";
 
 const levelColors: Record<LogLevel, string> = {
   trace: "text-slate-500",
@@ -8,6 +8,12 @@ const levelColors: Record<LogLevel, string> = {
   warn: "text-amber-600",
   error: "text-red-600",
 };
+
+const SOURCE_TABS: { id: LogSource; label: string }[] = [
+  { id: "rust", label: "Rust 처리" },
+  { id: "llm", label: "LLM" },
+  { id: "ollama", label: "Ollama" },
+];
 
 function LogLine({ entry }: { entry: AppLogEntry }) {
   const levelClass = levelColors[entry.level] ?? "text-slate-800";
@@ -36,11 +42,14 @@ interface LogViewerProps {
 
 export function LogViewer({ onClose }: LogViewerProps) {
   const { logs, clearLogs } = useLogStore();
+  const [activeTab, setActiveTab] = useState<LogSource>("rust");
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const filteredLogs = logs.filter((entry) => entry.source === activeTab);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs.length]);
+  }, [filteredLogs.length]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30">
@@ -64,13 +73,29 @@ export function LogViewer({ onClose }: LogViewerProps) {
             </button>
           </div>
         </div>
+        <div className="flex border-b border-slate-200">
+          {SOURCE_TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === id
+                  ? "text-amber-700 border-b-2 border-amber-500 bg-amber-50/50"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="overflow-auto flex-1 bg-slate-50 p-2 min-h-[200px]">
-          {logs.length === 0 ? (
+          {filteredLogs.length === 0 ? (
             <p className="text-slate-500 text-sm py-4 text-center">
-              로그가 없습니다.
+              {activeTab === "rust" ? "Rust 처리 로그가 없습니다." : activeTab === "llm" ? "LLM 로그가 없습니다." : "Ollama 로그가 없습니다."}
             </p>
           ) : (
-            logs.map((entry) => <LogLine key={entry.id} entry={entry} />)
+            filteredLogs.map((entry) => <LogLine key={entry.id} entry={entry} />)
           )}
           <div ref={bottomRef} />
         </div>

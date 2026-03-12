@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Outlet } from "react-router-dom";
 import { useCharacterStore } from "../stores/characterStore";
-import type { ActivityLog } from "../types";
 
 function getMonthDays(year: number, month: number): Date[] {
   const first = new Date(year, month, 1);
@@ -31,7 +30,7 @@ function isSameMonth(d: Date, year: number, month: number): boolean {
 export function ActivityPage() {
   const { date } = useParams<{ date: string }>();
   const navigate = useNavigate();
-  const { character, goals, logs, loadLogs } = useCharacterStore();
+  const { character, goals, loadLogs } = useCharacterStore();
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [month, setMonth] = useState(() => new Date().getMonth());
 
@@ -45,10 +44,6 @@ export function ActivityPage() {
   if (!character) return null;
 
   const days = getMonthDays(year, month);
-  const logsByDate = logs.reduce<Record<string, ActivityLog[]>>((acc, log) => {
-    (acc[log.date] = acc[log.date] || []).push(log);
-    return acc;
-  }, {});
 
   const activeGoalsInRange = goals.filter((g) => {
     const start = new Date(g.start_date);
@@ -107,16 +102,12 @@ export function ActivityPage() {
         {days.map((d) => {
           const ymd = dateToYmd(d);
           const inMonth = isSameMonth(d, year, month);
-          const dayLogs = logsByDate[ymd] || [];
           const dayGoals = activeGoalsInRange.filter((g) => {
             const start = new Date(g.start_date);
             const end = new Date(g.end_date);
             const t = new Date(ymd);
             return t >= start && t <= end;
           });
-          const summary = dayLogs.length
-            ? dayLogs[0].summary || dayLogs[0].content.slice(0, 20) + (dayLogs[0].content.length > 20 ? "…" : "")
-            : "";
 
           return (
             <button
@@ -132,21 +123,16 @@ export function ActivityPage() {
               <span className={inMonth ? "text-slate-800" : "text-slate-400"}>
                 {d.getDate()}
               </span>
-              <div className="flex flex-wrap gap-0.5 mt-0.5">
+              <div className="flex flex-wrap gap-1 mt-0.5">
                 {dayGoals.slice(0, 3).map((g) => (
                   <span
                     key={g.goal_id}
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    className="w-3 h-3 rounded-full shrink-0 ring-1 ring-slate-200 border border-slate-200/80"
                     style={{ backgroundColor: g.calendar_color || "#6366f1" }}
                     title={g.name}
                   />
                 ))}
               </div>
-              {summary && (
-                <p className="text-xs text-slate-500 truncate mt-0.5" title={summary}>
-                  {summary}
-                </p>
-              )}
             </button>
           );
         })}

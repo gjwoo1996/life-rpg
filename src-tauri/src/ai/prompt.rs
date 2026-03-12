@@ -1,6 +1,6 @@
 pub fn build_summary_prompt(content: &str) -> String {
     format!(
-        r#"Summarize the following activity in one short sentence (under 80 characters). Reply with only the summary, no quotes or prefix.
+        r#"Summarize the following activity in Korean in one short sentence (under 80 characters). Reply with only the summary, no quotes or prefix.
 Activity: {}
 Summary:"#,
         content
@@ -9,7 +9,7 @@ Summary:"#,
 
 pub fn build_daily_analysis_prompt(activities_text: &str) -> String {
     format!(
-        r#"The following are the user's activity logs for one day. Write a brief 2-3 sentence analysis of the day (what was done, progress, or encouragement). Reply in the same language as the activities.
+        r#"The following are the user's activity logs for one day. Write a brief 2-3 sentence analysis of the day (what was done, progress, or encouragement). Reply in Korean.
 Activities:
 {}
 Analysis:"#,
@@ -34,7 +34,7 @@ Target skill/ability: {}
 Recent activities:
 {}
 
-Write 2-4 sentences: progress so far, what to improve, and encouragement. Reply in the same language as the activities. No prefix or label."#,
+Write 2-4 sentences: progress so far, what to improve, and encouragement. Reply in Korean. No prefix or label."#,
         goal_name,
         target_ability,
         if previous_context.is_empty() {

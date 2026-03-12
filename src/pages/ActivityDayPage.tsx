@@ -53,11 +53,6 @@ export function ActivityDayPage() {
                 <span className="text-amber-600 font-medium">+{log.xp_gained} XP</span>
               </div>
               <p className="text-slate-700 whitespace-pre-wrap">{log.content}</p>
-              {log.summary && (
-                <p className="text-slate-500 text-sm mt-2 border-t border-slate-100 pt-2">
-                  요약: {log.summary}
-                </p>
-              )}
             </li>
           ))}
         </ul>
