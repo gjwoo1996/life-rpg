@@ -1,6 +1,6 @@
 {
   "name": "life-rpg",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "이 프로젝트는 **자기관리와 게임 시스템을 결합한 데스크탑 애플리케이션**입니다.",
   "main": "index.js",
   "directories": {

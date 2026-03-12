@@ -27,12 +27,12 @@ jobs:
 
       - name: Determine version
         id: version
-        run: node -e "const fs=require('fs');const b=process.env.BUMP_TYPE;const c=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json','utf8'));let [m,n,p]=c.version.split('.').map(s=>parseInt(s,10)||0);if(b==='major'){m++;n=0;p=0;}else if(b==='minor'){n++;p=0;}else{p++;}const v=[m,n,p].join('.');fs.appendFileSync(process.env.GITHUB_OUTPUT,'version='+v+'\n');"
+        run: node scripts/determine-version.cjs
         env:
           BUMP_TYPE: ${{ github.event.inputs.bump_type }}
 
       - name: Set app version (tauri.conf.json, Cargo.toml, package.json)
-        run: node -e "const fs=require('fs');const v=process.env.VERSION;const t=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json','utf8'));t.version=v;fs.writeFileSync('src-tauri/tauri.conf.json',JSON.stringify(t,null,2));let c=fs.readFileSync('src-tauri/Cargo.toml','utf8');c=c.replace(/^version\\s*=\\s*\"[^\"]+\"/m,'version = \"'+v+'\"');fs.writeFileSync('src-tauri/Cargo.toml',c);const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.version=v;fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
+        run: node scripts/set-app-version.cjs
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
