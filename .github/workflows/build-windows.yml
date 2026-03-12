@@ -3,10 +3,15 @@ name: Build Windows
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: "App version (비우면 tauri.conf.json 기준 패치 자동 증가)"
-        required: false
-        default: ""
+      bump_type:
+        description: "버전 자릿수 선택 (선택한 자릿수만 올리고 오른쪽은 0으로)"
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+        default: patch
 
 jobs:
   build-windows:
@@ -22,12 +27,12 @@ jobs:
 
       - name: Determine version
         id: version
-        run: node -e "var i=(process.env.INPUT_VERSION||'').trim(),fs=require('fs'),o=process.env.GITHUB_OUTPUT;if(i){fs.appendFileSync(o,'version='+i+'\n');}else{var c=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json','utf8')),p=c.version.split('.').map(function(s){return parseInt(s,10)||0;});while(p.length<3)p.push(0);p[2]++;fs.appendFileSync(o,'version='+p.join('.')+'\n');}"
+        run: node -e "const fs=require('fs');const b=process.env.BUMP_TYPE;const c=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json','utf8'));let [m,n,p]=c.version.split('.').map(s=>parseInt(s,10)||0);if(b==='major'){m++;n=0;p=0;}else if(b==='minor'){n++;p=0;}else{p++;}const v=[m,n,p].join('.');fs.appendFileSync(process.env.GITHUB_OUTPUT,'version='+v+'\n');"
         env:
-          INPUT_VERSION: ${{ github.event.inputs.version }}
+          BUMP_TYPE: ${{ github.event.inputs.bump_type }}
 
-      - name: Set app version
-        run: node -e "const fs=require('fs'); const p='src-tauri/tauri.conf.json'; const j=JSON.parse(fs.readFileSync(p,'utf8')); j.version=process.env.VERSION; fs.writeFileSync(p, JSON.stringify(j,null,2));"
+      - name: Set app version (tauri.conf.json, Cargo.toml, package.json)
+        run: node -e "const fs=require('fs');const v=process.env.VERSION;const t=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json','utf8'));t.version=v;fs.writeFileSync('src-tauri/tauri.conf.json',JSON.stringify(t,null,2));let c=fs.readFileSync('src-tauri/Cargo.toml','utf8');c=c.replace(/^version\\s*=\\s*\"[^\"]+\"/m,'version = \"'+v+'\"');fs.writeFileSync('src-tauri/Cargo.toml',c);const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.version=v;fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
